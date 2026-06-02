@@ -1,6 +1,6 @@
 # CELERIS
 
-> 🌐 **Acesse o projeto:** https://sofiamassaro.github.io/CELERIS/
+> 🌐 **Acesse o projeto:** https://sofiamassaro.github.io/celeris/
 > 🔧 **Backend (API):** [github.com/sofiamassaro/celeris-api](https://github.com/sofiamassaro/celeris-api)
 
 ## Redefinindo o Tempo da Justiça através da Triagem Automatizada
