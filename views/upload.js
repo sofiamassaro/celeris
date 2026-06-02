@@ -77,10 +77,16 @@ export function registrarEventosUpload() {
         if (file) mostrarArquivo(file);
     });
 
-    btnAvancar.addEventListener("click", () => {
-        document.querySelectorAll(".nav-item").forEach(link => link.classList.remove("active"));
-        const itemCadastro = document.querySelector('[data-section="cadastrar"]');
-        if (itemCadastro) itemCadastro.classList.add("active");
-        import("./cadastro.js").then(({ mostrarCadastro }) => mostrarCadastro());
-    });
+    function irParaCadastro() {
+    document.querySelectorAll(".nav-item").forEach(link => link.classList.remove("active"));
+    const itemCadastro = document.querySelector('[data-section="cadastrar"]');
+    if (itemCadastro) itemCadastro.classList.add("active");
+    import("./cadastro.js").then(({ mostrarCadastro }) => mostrarCadastro());
+}
+
+btnAvancar.addEventListener("click", irParaCadastro);
+
+const btnPular = document.getElementById("btn-pular-upload");
+if (btnPular) btnPular.addEventListener("click", irParaCadastro);
+
 }
