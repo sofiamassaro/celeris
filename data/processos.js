@@ -1,97 +1,34 @@
-   // ================= DADOS DOS PROCESSOS =================
-    // array com todos os processos da fila de triagem
-    // cada objeto representa um processo e guarda suas informações
-    
-export const processos = [
-        {
-            numero: "5003421-12.2024.8.24.0023",
-            dataentrada: "2024-06-15",
-            requerente: "João da Silva",
-            cpfRequerente: "032.456.789-10",
-            requerido: "Banco do Brasil S.A.",
-            cpfRequerido: "00.000.000/0001-91",
-            assunto: "Ação Revisional de Juros — Financiamento de Veículo",
-            status: "urgente",
-            tags: ["Direito Bancário", "Revisional de Juros"],
-            repetitivos: 12,
-            conteudo: "O autor celebrou contrato de financiamento de veículo automotor com o réu, tendo sido cobradas taxas de juros acima do limite permitido pelo Banco Central do Brasil..."
-        },
-        {
-            numero: "5003987-44.2024.8.24.0023",
-            dataentrada: "2024-10-15",
-            requerente: "Maria Oliveira",
-            cpfRequerente: "114.567.890-23",
-            requerido: "Caixa Econômica Federal",
-            cpfRequerido: "00.360.305/0001-04",
-            assunto: "Revisão de Contrato de Financiamento Imobiliário",
-            status: "prioritario",
-            tags: ["Financiamento", "Imobiliário"],
-            repetitivos: 4,
-            conteudo: "A autora contratou financiamento imobiliário pelo programa habitacional, alegando irregularidades na aplicação do índice de correção monetária durante o período de carência..."
-        },
-        {
-            numero: "5004102-88.2024.8.24.0023",
-            dataentrada: "2024-06-15",
-            requerente: "Pedro Alves",
-            cpfRequerente: "205.678.901-34",
-            requerido: "Itaú Unibanco S.A.",
-            cpfRequerido: "60.701.190/0001-04",
-            assunto: "Indenização por Dano Moral — Cobrança Indevida",
-            status: "normal",
-            tags: ["Consumidor", "Dano Moral"],
-            repetitivos: 0,
-            conteudo: "O autor foi surpreendido com cobrança indevida em sua fatura de cartão de crédito, referente a serviço que alega nunca ter contratado, sendo negativado indevidamente..."
-        },
-        {
-            numero: "5004388-21.2024.8.24.0023",
-            dataentrada: "2024-06-15",
-            requerente: "Ana Souza",
-            cpfRequerente: "356.789.012.45",
-            requerido: "Bradesco S.A.",
-            cpfRequerido: "60.746.948/0001-12",
-            assunto: "Cobrança Indevida de Tarifas Bancárias",
-            status: "normal",
-            tags: ["Direito Bancário", "Tarifas"],
-            repetitivos: 7,
-            conteudo: "A autora questiona a legalidade da cobrança de tarifas de manutenção de conta corrente e pacote de serviços, alegando que as cobranças foram realizadas sem autorização expressa..."
-        },
-        {
-            numero: "5004512-67.2024.8.24.0023",
-            dataentrada: "2024-06-15",
-            requerente: "Carlos Mendes",
-            cpfRequerente: "478.901.234-56",
-            requerido: "Santander Brasil S.A.",
-            cpfRequerido: "90.400.888/0001-42",
-            assunto: "Negativação Indevida no SPC/Serasa",
-            status: "urgente",
-            tags: ["Consumidor", "Negativação"],
-            repetitivos: 2,
-            conteudo: "O autor teve seu nome inscrito nos órgãos de proteção ao crédito em razão de dívida que alega já ter sido quitada, requerendo tutela de urgência para exclusão imediata da negativação..."
-        },
-        {
-            numero: "5004701-33.2024.8.24.0023",
-            dataentrada: "2024-06-15",
-            requerente: "Luciana Ferreira",
-            cpfRequerente: "589.012.345-67",
-            requerido: "Nubank S.A.",
-            cpfRequerido: "18.236.120/0001-58",
-            assunto: "Revisão de Limite e Contestação de Cobranças",
-            status: "normal",
-            tags: ["Crédito", "Fintech"],
-            repetitivos: 1,
-            conteudo: "A autora contesta cobranças realizadas em seu cartão de crédito, afirmando não reconhecer as transações listadas, e requer o ressarcimento dos valores debitados indevidamente..."
-        },
-        {
-            numero: "5004899-14.2024.8.24.0023",
-            dataentrada: "2024-06-15",
-            requerente: "Roberto Lima",
-            cpfRequerente: "623.123.456-78",
-            requerido: "Banco Inter S.A.",
-            cpfRequerido: "00.000.000/0001-91",
-            assunto: "Revisão de Contrato de Empréstimo Consignado",
-            status: "prioritario",
-            tags: ["Consignado", "Revisão Contratual"],
-            repetitivos: 3,
-            conteudo: "O autor, servidor público aposentado, questiona a taxa de juros aplicada em seu contrato de empréstimo consignado, alegando que supera o teto estabelecido em normativa do INSS..."
-        }
-    ];
+// ================= COMUNICAÇÃO COM A API CELERIS =================
+
+const API = "http://localhost:3000";
+
+export async function listarProcessos() {
+    const r = await fetch(`${API}/processos`);
+    if (!r.ok) throw new Error("Falha ao carregar processos");
+    return r.json();
+}
+
+export async function buscarProcesso(id) {
+    const r = await fetch(`${API}/processos/${id}`);
+    if (!r.ok) throw new Error("Processo não encontrado");
+    return r.json();
+}
+
+export async function criarProcesso(dados) {
+    const r = await fetch(`${API}/processos`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dados)
+    });
+    if (!r.ok) {
+        const erro = await r.json();
+        throw new Error(erro.erro || "Falha ao cadastrar processo");
+    }
+    return r.json();
+}
+
+export async function listarTags() {
+    const r = await fetch(`${API}/tags`);
+    if (!r.ok) throw new Error("Falha ao carregar tags");
+    return r.json();
+}

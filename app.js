@@ -1,5 +1,5 @@
 import { carregarFragmentos } from "./utils/loadViews.js";
-import { abrirProcesso, voltarParaFila } from "./views/documento.js";
+import { abrirProcesso, voltarParaFila, renderizarFila } from "./views/documento.js";
 import { mostrarSecaoGenerica } from "./views/generica.js";
 
 async function init() {
@@ -14,15 +14,11 @@ async function init() {
   const { mostrarCadastro, registrarEventos } = await import("./views/cadastro.js");
   registrarEventos();
 
+  // ⭐ NOVO: carrega os processos do banco via API e monta os cards da fila
+  await renderizarFila();
+
   // tela inicial: Upload de PDF (Etapa 1)
   mostrarUpload();
-
-  // cards da fila
-  document.querySelectorAll(".process-card").forEach(function(card) {
-    card.addEventListener("click", function() {
-      abrirProcesso(parseInt(card.getAttribute("data-id")));
-    });
-  });
 
   // botão voltar
   document.getElementById("btn-voltar")

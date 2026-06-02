@@ -6,8 +6,8 @@ import {
     setWorkflowStep
 } from "../utils/dom.js";
 
-import { voltarParaFila } from "./documento.js";
-import { processos } from "../data/processos.js";
+import { voltarParaFila, renderizarFila } from "./documento.js";
+import { criarProcesso, listarTags } from "../data/processos.js";
 
 const TAGS_POR_CLASSE = {
     "Ação Revisional de Juros":             ["Direito Bancário", "Revisional de Juros"],
@@ -38,47 +38,12 @@ function atualizarPreviewTags(classe, campoTagsPreview) {
     campoTagsPreview.innerHTML = tags.map(tag => `<span class="tag">${tag}</span>`).join("");
 }
 
-function inserirCardNaFila(processo) {
-    const lista = document.getElementById("process-list");
-    const labels = { normal: "Normal", prioritario: "Prioritário", urgente: "Urgente" };
-    const dataFormatada = formatarData(processo.dataEntrada);
-    const novoIndex = processos.length - 1;
-    const textoRep = processo.repetitivos === 1 ? "1 repetitivo" : `${processo.repetitivos} repetitivos`;
-
-    const card = document.createElement("div");
-    card.className = "process-card";
-    card.setAttribute("data-id", novoIndex);
-    card.innerHTML = `
-        <div class="process-card-top">
-            <span class="process-num">${processo.numero}</span>
-            <span class="status-badge ${processo.status}">${labels[processo.status]}</span>
-        </div>
-        <div class="process-card-title">${processo.requerente} vs. ${processo.requerido}</div>
-        <div class="process-card-sub">${processo.assunto}</div>
-        <div class="process-card-meta">
-            <span class="process-tag">${processo.tags[0]}</span>
-            <span class="process-meta-info"><i class="fas fa-calendar-alt"></i> Entrada: ${dataFormatada}</span>
-            <span class="process-meta-info"><i class="fas fa-copy"></i> ${textoRep}</span>
-        </div>
-    `;
-    card.addEventListener("click", function () {
-        import("./documento.js").then(({ abrirProcesso }) => abrirProcesso(novoIndex));
-    });
-    lista.insertBefore(card, lista.firstChild);
-}
-
-function atualizarContadores() {
-    const total = processos.length;
-    const filaCount = document.getElementById("fila-count");
-    if (filaCount) filaCount.textContent = `${total} processos aguardando`;
-    const badgeTriagem = document.getElementById("badge-triagem");
-    if (badgeTriagem) badgeTriagem.textContent = total;
-}
-
-function mostrarToast(msg) {
+function mostrarToast(msg, tipo = "sucesso") {
     const toast = document.createElement("div");
     toast.className = "toast-sucesso";
-    toast.innerHTML = `<i class="fas fa-check-circle"></i> ${msg}`;
+    const icone = tipo === "sucesso" ? "fa-check-circle" : "fa-exclamation-circle";
+    if (tipo === "erro") toast.style.background = "#991b1b";
+    toast.innerHTML = `<i class="fas ${icone}"></i> ${msg}`;
     document.body.appendChild(toast);
     setTimeout(() => toast.classList.add("visivel"), 50);
     setTimeout(() => {
@@ -97,20 +62,19 @@ export function mostrarCadastro() {
 }
 
 export function registrarEventos() {
-    // todos os getElementById ficam aqui dentro — DOM já existe neste ponto
-    const campoNumero      = document.getElementById("cad-numero");
-    const campoData        = document.getElementById("cad-data");
-    const campoRequerente  = document.getElementById("cad-requerente");
-    const campoCpf         = document.getElementById("cad-cpf");
-    const campoRequerido   = document.getElementById("cad-requerido");
-    const campoCpfRequerido= document.getElementById("cad-cpf-requerido");
-    const campoClasse      = document.getElementById("cad-classe");
-    const campoPrioridade  = document.getElementById("cad-prioridade");
-    const campoConteudo    = document.getElementById("cad-conteudo");
-    const campoObs         = document.getElementById("cad-obs");
-    const campoTagsPreview = document.getElementById("cad-tags-preview");
-    const formError        = document.getElementById("form-error");
-    const formErrorMsg     = document.getElementById("form-error-msg");
+    const campoNumero       = document.getElementById("cad-numero");
+    const campoData         = document.getElementById("cad-data");
+    const campoRequerente   = document.getElementById("cad-requerente");
+    const campoCpf          = document.getElementById("cad-cpf");
+    const campoRequerido    = document.getElementById("cad-requerido");
+    const campoCpfRequerido = document.getElementById("cad-cpf-requerido");
+    const campoClasse       = document.getElementById("cad-classe");
+    const campoPrioridade   = document.getElementById("cad-prioridade");
+    const campoConteudo     = document.getElementById("cad-conteudo");
+    const campoObs          = document.getElementById("cad-obs");
+    const campoTagsPreview  = document.getElementById("cad-tags-preview");
+    const formError         = document.getElementById("form-error");
+    const formErrorMsg      = document.getElementById("form-error-msg");
 
     const confNumero          = document.getElementById("conf-numero");
     const confData            = document.getElementById("conf-data");
@@ -174,44 +138,55 @@ export function registrarEventos() {
         getViewConfirmacao().style.display = "flex";
     });
 
-    document.getElementById("btn-confirmar-cadastro").addEventListener("click", function() {
-        const classe = campoClasse.value;
-        const tags   = TAGS_POR_CLASSE[classe] || ["Outros"];
+    document.getElementById("btn-confirmar-cadastro").addEventListener("click", async function() {
+        try {
+            const classe = campoClasse.value;
+            const tagsNomes = TAGS_POR_CLASSE[classe] || ["Outros"];
 
-        const novoProcesso = {
-            numero:          campoNumero.value.trim(),
-            dataEntrada:     campoData.value,
-            requerente:      campoRequerente.value.trim(),
-            cpfRequerente:   campoCpf.value.trim(),
-            requerido:       campoRequerido.value.trim(),
-            cpfRequerido:    campoCpfRequerido.value.trim(),
-            assunto:         classe,
-            status:          campoPrioridade.value,
-            tags:            tags,
-            repetitivos:     0,
-            conteudo:        campoConteudo.value.trim()
-        };
+            // Buscar todas as tags da API para converter nomes -> ids
+            const todasTags = await listarTags();
+            const tagIds = tagsNomes
+                .map(nome => todasTags.find(t => t.nome === nome)?.id)
+                .filter(Boolean);
 
-        processos.push(novoProcesso);
-        inserirCardNaFila(novoProcesso);
-        atualizarContadores();
+            const novoProcesso = {
+                numero:          campoNumero.value.trim(),
+                data_entrada:    campoData.value,
+                requerente:      campoRequerente.value.trim(),
+                cpf_requerente:  campoCpf.value.trim(),
+                requerido:       campoRequerido.value.trim(),
+                cpf_requerido:   campoCpfRequerido.value.trim(),
+                assunto:         classe,
+                status:          campoPrioridade.value,
+                repetitivos:     0,
+                conteudo:        campoConteudo.value.trim(),
+                observacoes:     campoObs.value.trim(),
+                tag_ids:         tagIds
+            };
 
-        campoNumero.value        = "";
-        campoData.value          = "";
-        campoRequerente.value    = "";
-        campoCpf.value           = "";
-        campoRequerido.value     = "";
-        campoCpfRequerido.value  = "";
-        campoClasse.value        = "";
-        campoPrioridade.value    = "normal";
-        campoConteudo.value      = "";
-        campoObs.value           = "";
-        atualizarPreviewTags("", campoTagsPreview);
+            await criarProcesso(novoProcesso);
+            await renderizarFila();
 
-        navItems.forEach(link => link.classList.remove("active"));
-        document.querySelector('[data-section="triagem"]').classList.add("active");
-        voltarParaFila();
-        mostrarToast("Processo cadastrado e incluído na fila com sucesso!");
+            // limpar formulário
+            campoNumero.value        = "";
+            campoData.value          = "";
+            campoRequerente.value    = "";
+            campoCpf.value           = "";
+            campoRequerido.value     = "";
+            campoCpfRequerido.value  = "";
+            campoClasse.value        = "";
+            campoPrioridade.value    = "normal";
+            campoConteudo.value      = "";
+            campoObs.value           = "";
+            atualizarPreviewTags("", campoTagsPreview);
+
+            navItems.forEach(link => link.classList.remove("active"));
+            document.querySelector('[data-section="triagem"]').classList.add("active");
+            voltarParaFila();
+            mostrarToast("Processo cadastrado e incluído na fila com sucesso!");
+        } catch (e) {
+            mostrarToast("Erro: " + e.message, "erro");
+        }
     });
 
     document.getElementById("btn-editar-cadastro").addEventListener("click", () => {
