@@ -26,34 +26,17 @@
   </div>
 
   <!-- Painel da fila -->
-  <div id="ai-panel-fila" style="display: none;">
-    <div class="ai-card">
-      <div class="card-header">
-        <i class="fas fa-robot"></i>
-        <h3>Visão Geral da IA</h3>
-      </div>
-      <p>Análise automática dos <strong>7 processos</strong> em fila:</p>
-      <div class="progress-bar">
-        <div class="progress-fill" style="width: 78%; background: #28a745;"></div>
-      </div>
-      <p style="font-size: 12px; color: #666; margin-top: 6px;">78% da triagem diária concluída</p>
-    </div>
 
-    <div class="ai-card">
+    <div class="ai-card ai-card--clickable" id="card-alertas-urgentes" role="button" tabindex="0">
       <div class="card-header">
         <i class="fas fa-exclamation-triangle" style="color: #ef4444;"></i>
         <h3>Alertas</h3>
       </div>
-      <p><strong>2 processos urgentes</strong> precisam de atenção prioritária hoje.</p>
-    </div>
-
-    <div class="ai-card">
-      <div class="card-header">
-        <i class="fas fa-copy"></i>
-        <h3>Repetitivos Detectados</h3>
-      </div>
-      <p>3 processos com padrão similar de revisão de juros bancários.</p>
-      <a href="#" class="card-link">Verificar Litispendência</a>
+      <p>
+        <strong><span id="alerta-urgentes-num">0</span> <span id="alerta-urgentes-txt">processos urgentes precisam</span></strong>
+        de atenção prioritária hoje.
+      </p>
+      <a href="#" class="card-link">Ver apenas urgentes <i class="fas fa-arrow-right" style="font-size: 11px;"></i></a>
     </div>
 
     <div class="ai-card">

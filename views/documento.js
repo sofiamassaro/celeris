@@ -16,6 +16,13 @@ import {
     setWorkflowStep
 } from "../utils/dom.js";
 
+// ================= ESTADO DA FILA =================
+// Cache do último array de processos vindo da API, usado pelos filtros
+// e pela atualização dinâmica do card de Alertas no painel lateral.
+let processosCache = [];
+// Filtro ativo da fila: null = sem filtro, "urgente"/"prioritario"/"normal" = filtra por status
+let filtroAtivo = null;
+
 // ================= UTILITÁRIOS =================
 function formatarDataBR(dataIso) {
     if (!dataIso) return "—";
@@ -26,7 +33,6 @@ function formatarDataBR(dataIso) {
 // ================= RENDERIZAÇÃO DOS CARDS =================
 function criarCardProcesso(p) {
     const labels = { normal: "Normal", prioritario: "Prioritário", urgente: "Urgente" };
-    const textoRep = p.repetitivos === 1 ? "1 repetitivo" : `${p.repetitivos} repetitivos`;
     const tagPrincipal = p.tags && p.tags.length > 0 ? p.tags[0].nome : "Sem tag";
 
     const card = document.createElement("div");
@@ -42,26 +48,88 @@ function criarCardProcesso(p) {
         <div class="process-card-meta">
             <span class="process-tag">${tagPrincipal}</span>
             <span class="process-meta-info"><i class="fas fa-calendar-alt"></i> Entrada: ${formatarDataBR(p.data_entrada)}</span>
-            <span class="process-meta-info"><i class="fas fa-copy"></i> ${textoRep}</span>
         </div>
     `;
     card.addEventListener("click", () => abrirProcesso(p.id));
     return card;
 }
 
+// Faz fetch UMA vez, popula o cache e dispara a renderização (respeitando o filtro ativo).
+// Chamada no init e sempre que um novo processo é cadastrado.
 export async function renderizarFila() {
     const lista = document.getElementById("process-list");
     const filaCount = document.getElementById("fila-count");
     try {
-        const processos = await listarProcessos();
-        lista.innerHTML = "";
-        processos.forEach(p => lista.appendChild(criarCardProcesso(p)));
-        filaCount.textContent = `${processos.length} processos aguardando`;
+        processosCache = await listarProcessos();
+        aplicarRender();
         const badge = document.getElementById("badge-triagem");
-        if (badge) badge.textContent = processos.length;
+        if (badge) badge.textContent = processosCache.length;
+        atualizarAlertaUrgentes();
     } catch (e) {
         lista.innerHTML = `<p style="color: #991b1b; padding: 20px;">Erro ao carregar processos: ${e.message}</p>`;
         filaCount.textContent = "Erro";
+    }
+}
+
+// Renderiza a lista a partir do cache, aplicando o filtro ativo se houver.
+// Separada de renderizarFila() para que o filtro não precise refazer fetch.
+function aplicarRender() {
+    const lista = document.getElementById("process-list");
+    const filaCount = document.getElementById("fila-count");
+
+    const labels = { urgente: "urgentes", prioritario: "prioritários", normal: "normais" };
+    const visiveis = filtroAtivo
+        ? processosCache.filter(p => p.status === filtroAtivo)
+        : processosCache;
+
+    lista.innerHTML = "";
+
+    // chip de filtro ativo
+    if (filtroAtivo) {
+        const chip = document.createElement("div");
+        chip.className = "filtro-chip";
+        chip.innerHTML = `
+            <span>Filtrando: ${labels[filtroAtivo].charAt(0).toUpperCase() + labels[filtroAtivo].slice(1)}</span>
+            <button class="filtro-chip-clear" aria-label="Limpar filtro">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        chip.querySelector(".filtro-chip-clear").addEventListener("click", limparFiltro);
+        lista.appendChild(chip);
+    }
+
+    visiveis.forEach(p => lista.appendChild(criarCardProcesso(p)));
+
+    if (filtroAtivo) {
+        filaCount.textContent = `${visiveis.length} processos ${labels[filtroAtivo]}`;
+    } else {
+        filaCount.textContent = `${visiveis.length} processos aguardando`;
+    }
+}
+
+// Aplica filtro por status SEM refazer fetch (usa o cache).
+// Exportada para ser chamada pelo handler do card de Alertas no app.js.
+export function filtrarFilaPorStatus(status) {
+    filtroAtivo = status;
+    aplicarRender();
+}
+
+export function limparFiltro() {
+    filtroAtivo = null;
+    aplicarRender();
+}
+
+// Atualiza dinamicamente o número de urgentes no card de Alertas do ai-panel.
+// Mantém o HTML "burro": ele só tem placeholders, o JS preenche.
+function atualizarAlertaUrgentes() {
+    const urgentes = processosCache.filter(p => p.status === "urgente").length;
+    const elNum = document.getElementById("alerta-urgentes-num");
+    const elTxt = document.getElementById("alerta-urgentes-txt");
+    if (elNum) elNum.textContent = urgentes;
+    if (elTxt) {
+        elTxt.textContent = urgentes === 1
+            ? "processo urgente precisa"
+            : "processos urgentes precisam";
     }
 }
 

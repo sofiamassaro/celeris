@@ -1,5 +1,5 @@
 import { carregarFragmentos } from "./utils/loadViews.js";
-import { abrirProcesso, voltarParaFila, renderizarFila } from "./views/documento.js";
+import { abrirProcesso, voltarParaFila, renderizarFila, filtrarFilaPorStatus } from "./views/documento.js";
 import { mostrarSecaoGenerica } from "./views/generica.js";
 
 async function init() {
@@ -14,8 +14,27 @@ async function init() {
   const { mostrarCadastro, registrarEventos } = await import("./views/cadastro.js");
   registrarEventos();
 
-  // ⭐ NOVO: carrega os processos do banco via API e monta os cards da fila
+  // carrega os processos do banco via API e monta os cards da fila
   await renderizarFila();
+
+  // card "Alertas" no ai-panel: clica → filtra fila por urgentes e navega para Triagem
+const cardAlertas = document.getElementById("card-alertas-urgentes");
+if (cardAlertas) {
+    const acionarFiltroUrgentes = () => {
+        document.querySelectorAll(".nav-item").forEach(link => link.classList.remove("active"));
+        document.querySelector('[data-section="triagem"]').classList.add("active");
+        voltarParaFila();
+        filtrarFilaPorStatus("urgente");
+    };
+    cardAlertas.addEventListener("click", acionarFiltroUrgentes);
+    // acessibilidade: Enter e Espaço também acionam
+    cardAlertas.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            acionarFiltroUrgentes();
+        }
+    });
+}
 
   // tela inicial: Upload de PDF (Etapa 1)
   mostrarUpload();
