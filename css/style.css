@@ -266,6 +266,35 @@ body {
     gap: 4px;
 }
 
+/* ações no topo do card (badge + excluir) */
+.process-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* botão de excluir no card — aparece só no hover pra reduzir ruído visual */
+.btn-excluir-card {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 13px;
+    padding: 4px 6px;
+    border-radius: 6px;
+    transition: 0.2s;
+    opacity: 0;
+}
+
+.process-card:hover .btn-excluir-card {
+    opacity: 1;
+}
+
+.btn-excluir-card:hover {
+    background: #fef2f2;
+    color: #991b1b;
+}
+
 /* ================= BADGES DE STATUS ================= */
 /* cada badge tem cor diferente conforme a urgência */
 .status-badge {

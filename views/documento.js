@@ -1,4 +1,4 @@
-import { listarProcessos, buscarProcesso } from "../data/processos.js";
+import { listarProcessos, buscarProcesso, deletarProcesso} from "../data/processos.js";
 
 import {
     getViewFila,
@@ -15,6 +15,8 @@ import {
     sairModoCadastro,
     setWorkflowStep
 } from "../utils/dom.js";
+
+import { mostrarToast } from "../utils/toast.js";
 
 // ================= ESTADO DA FILA =================
 // Cache do último array de processos vindo da API, usado pelos filtros
@@ -41,7 +43,12 @@ function criarCardProcesso(p) {
     card.innerHTML = `
         <div class="process-card-top">
             <span class="process-num">${p.numero}</span>
-            <span class="status-badge ${p.status}">${labels[p.status]}</span>
+            <div class="process-card-actions">
+                <span class="status-badge ${p.status}">${labels[p.status]}</span>
+                <button class="btn-excluir-card" title="Excluir processo" aria-label="Excluir processo">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>
         </div>
         <div class="process-card-title">${p.requerente} vs. ${p.requerido}</div>
         <div class="process-card-sub">${p.assunto}</div>
@@ -51,6 +58,13 @@ function criarCardProcesso(p) {
         </div>
     `;
     card.addEventListener("click", () => abrirProcesso(p.id));
+
+    // botão de exclusão: stopPropagation impede que o clique "suba" e abra o processo
+    card.querySelector(".btn-excluir-card").addEventListener("click", (e) => {
+        e.stopPropagation();
+        excluirProcesso(p.id, p.numero);
+    });
+
     return card;
 }
 
@@ -117,6 +131,21 @@ export function filtrarFilaPorStatus(status) {
 export function limparFiltro() {
     filtroAtivo = null;
     aplicarRender();
+}
+
+async function excluirProcesso(id, numero) {
+    const confirmado = window.confirm(
+        `Tem certeza que deseja excluir o processo ${numero}?\nEsta ação não pode ser desfeita.`
+    );
+    if (!confirmado) return;
+
+    try {
+        await deletarProcesso(id);
+        await renderizarFila();   // refaz o fetch: atualiza cache, contadores e alerta de urgentes
+        mostrarToast("Processo excluído da fila com sucesso!");
+    } catch (e) {
+        mostrarToast("Erro ao excluir: " + e.message, "erro");
+    }
 }
 
 // Atualiza dinamicamente o número de urgentes no card de Alertas do ai-panel.

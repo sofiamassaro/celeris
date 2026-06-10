@@ -32,3 +32,16 @@ export async function listarTags() {
     if (!r.ok) throw new Error("Falha ao carregar tags");
     return r.json();
 }
+
+export async function deletarProcesso(id) {
+    const r = await fetch(`${API}/processos/${id}`, { method: "DELETE" });
+    if (!r.ok) {
+        let msg = "Falha ao excluir processo";
+        try {
+            const erro = await r.json();   // erro normalmente vem com { erro: "..." }
+            msg = erro.erro || msg;
+        } catch { /* algumas respostas de erro podem não ter corpo */ }
+        throw new Error(msg);
+    }
+    return true;   // 204 = sucesso sem conteúdo
+}

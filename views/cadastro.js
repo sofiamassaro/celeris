@@ -8,6 +8,7 @@ import {
 
 import { voltarParaFila, renderizarFila } from "./documento.js";
 import { criarProcesso, listarTags } from "../data/processos.js";
+import { mostrarToast } from "../utils/toast.js";
 
 const TAGS_POR_CLASSE = {
     "Ação Revisional de Juros":             ["Direito Bancário", "Revisional de Juros"],
@@ -36,20 +37,6 @@ function atualizarPreviewTags(classe, campoTagsPreview) {
         return;
     }
     campoTagsPreview.innerHTML = tags.map(tag => `<span class="tag">${tag}</span>`).join("");
-}
-
-function mostrarToast(msg, tipo = "sucesso") {
-    const toast = document.createElement("div");
-    toast.className = "toast-sucesso";
-    const icone = tipo === "sucesso" ? "fa-check-circle" : "fa-exclamation-circle";
-    if (tipo === "erro") toast.style.background = "#991b1b";
-    toast.innerHTML = `<i class="fas ${icone}"></i> ${msg}`;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.classList.add("visivel"), 50);
-    setTimeout(() => {
-        toast.classList.remove("visivel");
-        setTimeout(() => toast.remove(), 400);
-    }, 3500);
 }
 
 export function mostrarCadastro() {
