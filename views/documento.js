@@ -1,4 +1,4 @@
-import { listarProcessos, buscarProcesso, deletarProcesso} from "../data/processos.js";
+import { listarProcessos, buscarProcesso, deletarProcesso, atualizarProcesso, listarTags } from "../data/processos.js";
 
 import {
     getViewFila,
@@ -22,6 +22,21 @@ import { mostrarToast } from "../utils/toast.js";
 // Cache do último array de processos vindo da API, usado pelos filtros
 // e pela atualização dinâmica do card de Alertas no painel lateral.
 let processosCache = [];
+// Processo atualmente aberto na view de documento
+let processoAtual = null;
+
+const TAGS_POR_CLASSE = {
+    "Ação Revisional de Juros":             ["Direito Bancário", "Revisional de Juros"],
+    "Indenização por Dano Moral":           ["Consumidor", "Dano Moral"],
+    "Cobrança Indevida de Tarifas":         ["Direito Bancário", "Tarifas"],
+    "Negativação Indevida no SPC/Serasa":   ["Consumidor", "Negativação"],
+    "Revisão de Contrato de Financiamento": ["Financiamento", "Imobiliário"],
+    "Revisão de Empréstimo Consignado":     ["Consignado", "Revisão Contratual"],
+    "Revisão de Limite de Crédito":         ["Crédito", "Fintech"],
+    "Execução de Título Extrajudicial":     ["Execução", "Título Extrajudicial"],
+    "Ação Monitória":                       ["Monitória", "Cobrança"],
+    "Outro":                                ["Outros"]
+};
 // Filtro ativo da fila: null = sem filtro, "urgente"/"prioritario"/"normal" = filtra por status
 let filtroAtivo = null;
 
@@ -166,6 +181,12 @@ function atualizarAlertaUrgentes() {
 export async function abrirProcesso(id) {
     try {
         const p = await buscarProcesso(id);
+        processoAtual = p;
+
+        // garante que a view de documento sempre abre no modo de leitura
+        document.getElementById("edit-form-container").style.display = "none";
+        document.getElementById("document-paper").style.display      = "block";
+        document.getElementById("btn-editar-processo").style.display = "";
 
         getDocTitle().textContent = `EXCELENTÍSSIMO SENHOR DOUTOR JUIZ DE DIREITO DA VARA BANCÁRIA`;
         getDocMeta().innerHTML = `
@@ -203,4 +224,88 @@ export function voltarParaFila() {
     getViewFila().style.display    = "flex";
     getAiPanelFila().style.display = "block";
     setWorkflowStep("triagem");
+}
+
+// ================= EDIÇÃO DE PROCESSO =================
+function abrirEdicaoProcesso() {
+    if (!processoAtual) return;
+    const p = processoAtual;
+
+    document.getElementById("edit-numero").value      = p.numero || "";
+    document.getElementById("edit-data").value        = p.data_entrada ? p.data_entrada.split("T")[0] : "";
+    document.getElementById("edit-requerente").value  = p.requerente || "";
+    document.getElementById("edit-cpf").value         = p.cpf_requerente || "";
+    document.getElementById("edit-requerido").value   = p.requerido || "";
+    document.getElementById("edit-cpf-requerido").value = p.cpf_requerido || "";
+    document.getElementById("edit-classe").value      = p.assunto || "";
+    document.getElementById("edit-prioridade").value  = p.status || "normal";
+    document.getElementById("edit-conteudo").value    = p.conteudo || "";
+    document.getElementById("edit-obs").value         = p.observacoes || "";
+
+    document.getElementById("edit-form-error").style.display = "none";
+    document.getElementById("document-paper").style.display  = "none";
+    document.getElementById("btn-editar-processo").style.display = "none";
+    document.getElementById("edit-form-container").style.display = "block";
+}
+
+function cancelarEdicao() {
+    document.getElementById("edit-form-container").style.display = "none";
+    document.getElementById("document-paper").style.display      = "block";
+    document.getElementById("btn-editar-processo").style.display = "";
+    document.getElementById("edit-form-error").style.display     = "none";
+}
+
+async function salvarEdicaoProcesso() {
+    const numero     = document.getElementById("edit-numero").value.trim();
+    const data       = document.getElementById("edit-data").value;
+    const requerente = document.getElementById("edit-requerente").value.trim();
+    const requerido  = document.getElementById("edit-requerido").value.trim();
+    const classe     = document.getElementById("edit-classe").value;
+    const conteudo   = document.getElementById("edit-conteudo").value.trim();
+    const errorEl    = document.getElementById("edit-form-error");
+    const errorMsgEl = document.getElementById("edit-form-error-msg");
+
+    if (!numero || !data || !requerente || !requerido || !classe || !conteudo) {
+        errorMsgEl.textContent = "Preencha todos os campos obrigatórios antes de salvar.";
+        errorEl.style.display = "flex";
+        return;
+    }
+    errorEl.style.display = "none";
+
+    try {
+        const tagsNomes = TAGS_POR_CLASSE[classe] || ["Outros"];
+        const todasTags = await listarTags();
+        const tagIds = tagsNomes
+            .map(nome => todasTags.find(t => t.nome === nome)?.id)
+            .filter(Boolean);
+
+        const dados = {
+            numero,
+            data_entrada:   data,
+            requerente,
+            cpf_requerente: document.getElementById("edit-cpf").value.trim(),
+            requerido,
+            cpf_requerido:  document.getElementById("edit-cpf-requerido").value.trim(),
+            assunto:        classe,
+            status:         document.getElementById("edit-prioridade").value,
+            conteudo,
+            observacoes:    document.getElementById("edit-obs").value.trim(),
+            tag_ids:        tagIds
+        };
+
+        await atualizarProcesso(processoAtual.id, dados);
+        mostrarToast("Processo atualizado com sucesso!");
+        await abrirProcesso(processoAtual.id);
+    } catch (e) {
+        mostrarToast("Erro ao salvar: " + e.message, "erro");
+    }
+}
+
+export function registrarEventosEdicao() {
+    document.getElementById("btn-editar-processo")
+        .addEventListener("click", abrirEdicaoProcesso);
+    document.getElementById("btn-cancelar-edicao")
+        .addEventListener("click", cancelarEdicao);
+    document.getElementById("btn-salvar-edicao")
+        .addEventListener("click", salvarEdicaoProcesso);
 }

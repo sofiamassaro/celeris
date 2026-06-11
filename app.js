@@ -1,5 +1,5 @@
 import { carregarFragmentos } from "./utils/loadViews.js";
-import { abrirProcesso, voltarParaFila, renderizarFila, filtrarFilaPorStatus } from "./views/documento.js";
+import { abrirProcesso, voltarParaFila, renderizarFila, filtrarFilaPorStatus, registrarEventosEdicao } from "./views/documento.js";
 import { mostrarSecaoGenerica } from "./views/generica.js";
 
 async function init() {
@@ -13,6 +13,9 @@ async function init() {
   // importa cadastro.js SÓ AQUI, após o DOM estar pronto
   const { mostrarCadastro, registrarEventos } = await import("./views/cadastro.js");
   registrarEventos();
+
+  // registra eventos do formulário de edição de processo
+  registrarEventosEdicao();
 
   // carrega os processos do banco via API e monta os cards da fila
   await renderizarFila();

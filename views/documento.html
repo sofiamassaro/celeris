@@ -4,9 +4,12 @@
       <i class="fas fa-arrow-left"></i> Voltar para a fila
     </button>
     <span class="back-process-num" id="back-process-num"></span>
+    <button class="btn btn-blue" id="btn-editar-processo" style="margin-left: auto;">
+      <i class="fas fa-pen"></i> Editar
+    </button>
   </div>
 
-  <div class="document-paper">
+  <div class="document-paper" id="document-paper">
     <h2 class="doc-title" id="doc-title">
       EXCELENTÍSSIMO SENHOR DOUTOR JUIZ DE DIREITO...
     </h2>
@@ -18,6 +21,107 @@
     <div class="doc-content">
       <p id="doc-content-text">O autor celebrou contrato de financiamento...</p>
       <p class="placeholder-text">[Simulação do conteúdo da petição inicial...]</p>
+    </div>
+  </div>
+
+  <!-- Formulário de edição (oculto por padrão) -->
+  <div id="edit-form-container" class="fila-container" style="display: none;">
+    <div class="fila-header">
+      <div>
+        <h2 class="fila-title">Editar Processo</h2>
+        <p class="fila-subtitle">Altere os dados do processo e salve as modificações</p>
+      </div>
+    </div>
+
+    <div class="cadastro-form">
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Número do Processo <span class="form-required">*</span></label>
+          <input type="text" class="form-input" id="edit-numero"
+            placeholder="0000000-00.0000.8.24.0000" maxlength="25">
+        </div>
+        <div class="form-group form-group--sm">
+          <label class="form-label">Data de Entrada <span class="form-required">*</span></label>
+          <input type="date" class="form-input" id="edit-data">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Requerente (Autor) <span class="form-required">*</span></label>
+          <input type="text" class="form-input" id="edit-requerente" placeholder="Nome completo">
+        </div>
+        <div class="form-group form-group--sm">
+          <label class="form-label">CPF (Autor)</label>
+          <input type="text" class="form-input" id="edit-cpf" placeholder="000.000.000-00" maxlength="14">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Requerido (Réu) <span class="form-required">*</span></label>
+          <input type="text" class="form-input" id="edit-requerido" placeholder="Nome da instituição ou pessoa">
+        </div>
+        <div class="form-group form-group--sm">
+          <label class="form-label">CPF (Réu)</label>
+          <input type="text" class="form-input" id="edit-cpf-requerido" placeholder="000.000.000-00" maxlength="14">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Classe Processual <span class="form-required">*</span></label>
+          <select class="form-input form-select" id="edit-classe">
+            <option value="" disabled>Selecione a classe...</option>
+            <option value="Ação Revisional de Juros">Ação Revisional de Juros</option>
+            <option value="Indenização por Dano Moral">Indenização por Dano Moral</option>
+            <option value="Cobrança Indevida de Tarifas">Cobrança Indevida de Tarifas</option>
+            <option value="Negativação Indevida no SPC/Serasa">Negativação Indevida no SPC/Serasa</option>
+            <option value="Revisão de Contrato de Financiamento">Revisão de Contrato de Financiamento</option>
+            <option value="Revisão de Empréstimo Consignado">Revisão de Empréstimo Consignado</option>
+            <option value="Revisão de Limite de Crédito">Revisão de Limite de Crédito</option>
+            <option value="Execução de Título Extrajudicial">Execução de Título Extrajudicial</option>
+            <option value="Ação Monitória">Ação Monitória</option>
+            <option value="Outro">Outro</option>
+          </select>
+        </div>
+        <div class="form-group form-group--sm">
+          <label class="form-label">Prioridade</label>
+          <select class="form-input form-select" id="edit-prioridade">
+            <option value="normal">Normal</option>
+            <option value="prioritario">Prioritário</option>
+            <option value="urgente">Urgente</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Conteúdo da Petição <span class="form-required">*</span></label>
+        <textarea class="form-input form-textarea form-textarea--lg" id="edit-conteudo"
+          placeholder="Descreva os fatos e fundamentos jurídicos da petição..." rows="5"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Observações Internas</label>
+        <textarea class="form-input form-textarea" id="edit-obs"
+          placeholder="Notas internas do servidor (não constam no processo)..." rows="2"></textarea>
+      </div>
+
+      <div class="form-error" id="edit-form-error" style="display: none;">
+        <i class="fas fa-exclamation-circle"></i>
+        <span id="edit-form-error-msg">Preencha todos os campos obrigatórios.</span>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn-voltar" id="btn-cancelar-edicao">
+          <i class="fas fa-times"></i> Cancelar
+        </button>
+        <button class="btn btn-blue btn-cadastrar" id="btn-salvar-edicao">
+          <i class="fas fa-save"></i> Salvar Alterações
+        </button>
+      </div>
+
     </div>
   </div>
 </section>

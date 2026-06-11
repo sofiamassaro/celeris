@@ -33,6 +33,19 @@ export async function listarTags() {
     return r.json();
 }
 
+export async function atualizarProcesso(id, dados) {
+    const r = await fetch(`${API}/processos/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dados)
+    });
+    if (!r.ok) {
+        const erro = await r.json();
+        throw new Error(erro.erro || "Falha ao atualizar processo");
+    }
+    return r.json();
+}
+
 export async function deletarProcesso(id) {
     const r = await fetch(`${API}/processos/${id}`, { method: "DELETE" });
     if (!r.ok) {
